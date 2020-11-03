@@ -1,8 +1,8 @@
 # Rollers
 (Work in Progress)
 ### Efficient stateful moving window functions for timeseries.
-This Python/C++ library contains implementations of algorithms for calcuating mean, min, max, var & volatility, using the appropriate algorithms<sup>[1]</sup> and data structures<sup>[2]</sup> for optimizing computational complexity. 
-Application is intended for finanical times series, hence the set of functions performed are open, high low, close, mean, log returns\*, var and volatility. 
+This Python/C++ library contains implementations of algorithms for calcuating mean, min, max, var & volatility on sliding time-based windows, using the appropriate algorithms<sup>[1]</sup> and data structures<sup>[2]</sup> for optimimal computational complexity. 
+Application is intended for finanical times series, hence the set of functions available are open, high low, close, mean, log returns\*, var and volatility. 
 These 8 functions are performed for each new datapoint and aggregated into one matrix for any number of timeframes specified. 
 The windowed functions may aggregate based on either continuous time, with variable window sizes and no assumption of the data being evenly sampled, or fixed window sizes which correspond to periods defined by number of data points sampled, instead of actual time.
 <br>
@@ -45,7 +45,7 @@ assert not np.allclose(out, roller.roll(series))
 A C++ compiler is needed along with CMake for compiling the c++ source into a shared object library which is used from python. 
 * Pybind11 - for binding c++ -> python
 * Numpy - as core data structure
-* Pandas - for datatime handling
+* Pandas - for datetime handling
 * C++11 Compiler
 * CMake 
 
@@ -66,6 +66,8 @@ or:
 * Tests for Roller Wrapper. Currently tests operate on RollerX directly.
 * Use either templating or dynamic dispatch / overloading to allow user to select
 which time series functions they want, instead of providing all 8 by default.
+* Switch to Eigen Tensor instead of boost multi for multi-dimenional arrays
+* Reconsider data structures for storing memory - must be efficient to resize/re-allocate 
 
 <br><br><br>
 

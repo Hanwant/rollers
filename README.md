@@ -48,6 +48,8 @@ A C++ compiler is needed along with CMake for compiling the c++ source into a sh
 * Pandas - for datetime handling
 * C++11 Compiler
 * CMake 
+* Eigen
+* Boost - for multi dimensional arrays - temporary while switching to Eigen Tensor
 
 To run tests: 
 * pytest

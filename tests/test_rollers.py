@@ -8,9 +8,8 @@ import numpy as np
 import pandas as pd
 import _rollers
 import rollers
-from preprocessing import rollers as rollers_cy
+# from preprocessing import rollers as rollers_cy
 # from preprocessing.utils import SYDNEY, SYDNEY_HOURS, NY, NY_HOURS, TOKYO, TOKYO_HOURS, LONDON, LONDON_HOURS
-from algotrading_utils.utils import time_profile
 
 import pytz
 
@@ -33,6 +32,32 @@ arr = np.abs(np.random.randn(N))
 timedeltas = [pd.Timedelta(t) for t in ["15m", "30m", "1h", "2h", "4h", "12h", "1d"]]
 tfs = [tdelta.value for tdelta in timedeltas]
 
+def time_profile(repeats: int, out_results=False, **kwargs):
+    """
+    Time functions by passing callables as keyword arguments
+    Timings are printed
+    repeats = number of times to call each function
+    out_results = whether to return the results of the functions
+    If repeats > 1, the most recent results is returned and if number of functions>1
+    a dict of results is returned
+    """
+    times = {}
+    out = {}
+    # timer = time.perf_counter if sys.platform == 'win32' else time.time
+    timer = time.perf_counter
+    for name, func in kwargs.items():
+        res = None
+        start = timer()
+        for i in range(repeats):
+            res = func()
+        times[str(name)] = (timer() - start) / repeats
+        out[name] = res
+    for name, f in kwargs.items():
+        print(name, '  :  ', f'{times[str(name)]:0.10f}', ' (s)')
+    if out_results:
+        if len(kwargs) == 1:
+            return out[name]
+        return out
 
 @pytest.mark.skip(reason="Utility Plotting Function")
 def plot(out, ref, feats=[0, 1, 2, 3, 4, 5, 6, 7], tfs = "all", timestamps=None, sharex=True):
@@ -78,9 +103,9 @@ def shift_forward(x, timestamps, timeframes, trunc=False):
 #     test = _rollers.movingWindowMean(timearr, arr, window)
 #     np.testing.assert_allclose(ref, test, equal_nan=True)
 
-@pytest.mark.skip(reason="Utility Function")
-def make_zones(ts):
-    return rollers_cy._chronometerFX_discrete(ts).astype(np.bool)
+# @pytest.mark.skip(reason="Utility Function")
+# def make_zones(ts):
+#     return rollers_cy._chronometerFX_discrete(ts).astype(np.bool)
 
 def test_wrapper():
     roller = rollers.Roller(timedeltas)

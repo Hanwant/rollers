@@ -50,7 +50,6 @@ RollerX::RollerX(vector<uint64_t> timeframes, int nzones): timeframes(timeframes
 }
 
 void RollerX::ingest(const arrType& arr, const timearrType& timestamps, outType& out, zoneBoolType& zones){
-  // cout << "ingesting" << endl;
   N = arr.size();
 
   if (!initialized){
@@ -197,7 +196,6 @@ outType RollerX::roll(py::EigenDRef<arrType> arr_in, py::EigenDRef<timearrType> 
     else{
       // cout << "Rolling with only cont" << endl;
       while(I <= N-1){
-        // cout << I << endl;
         _step(arr, timearr, out);
         if (I > N-1) break;
         I++;

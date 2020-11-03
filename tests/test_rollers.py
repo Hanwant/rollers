@@ -6,7 +6,8 @@ import pytest
 import timeit
 import numpy as np
 import pandas as pd
-import _rollers as rollers
+import _rollers
+import rollers
 from preprocessing import rollers as rollers_cy
 # from preprocessing.utils import SYDNEY, SYDNEY_HOURS, NY, NY_HOURS, TOKYO, TOKYO_HOURS, LONDON, LONDON_HOURS
 from algotrading_utils.utils import time_profile
@@ -74,20 +75,31 @@ def shift_forward(x, timestamps, timeframes, trunc=False):
 # def test_mean():
 #     window = 50
 #     ref = pd.Series(arr).rolling(window, min_periods=1).mean().values
-#     test = rollers.movingWindowMean(timearr, arr, window)
+#     test = _rollers.movingWindowMean(timearr, arr, window)
 #     np.testing.assert_allclose(ref, test, equal_nan=True)
 
 @pytest.mark.skip(reason="Utility Function")
 def make_zones(ts):
     return rollers_cy._chronometerFX_discrete(ts).astype(np.bool)
 
+def test_wrapper():
+    roller = rollers.Roller(timedeltas)
+    series = pd.Series(arr, index=timestamps)
+    out = roller.roll(series)
+    out = roller.roll(arr, timestamps)
+    out = roller.roll(arr, timearr)
+
+    roller_discrete = rollers.Roller([1, 2, 3, 4])
+    series.index = np.arange(5, len(series) + 5)
+    out = roller_discrete.roll(series)
+
 def test_continuousX(ret=False):
     nzones = 0
     nfeats = 8
 
-    rollerX = rollers.RollerX(tfs, nzones=nzones)
+    rollerX = _rollers.RollerX(tfs, nzones=nzones)
     # USE ROLLER_CY FOR SPEED BENCHMARK AND PANDAS FOR TESTING LOGIC
-    # rollerX_cy = rollers_cy.RollerX_NEW(np.array(tfs))
+    # rollerX_cy = _rollers_cy.RollerX_NEW(np.array(tfs))
     # out_ref_cy = time_profile(1, 1, roller_cy = lambda: rollerX_cy.roll(arr, timestamps))[1][:, :, :len(tfs)]
     print("Doing Pandas Calculations...takes time")
     def calc_pd_ref():
@@ -105,7 +117,7 @@ def test_continuousX(ret=False):
         return ref_pd
     def calc_roller_out():
         idx1, idx2 = len(arr)//3, 2* (len(arr)//3)
-        _rollerX = rollers.RollerX(tfs, nzones=nzones)
+        _rollerX = _rollers.RollerX(tfs, nzones=nzones)
         out1 = np.array(_rollerX.roll(arr[:idx1], timearr[:idx1]), copy=False)
         out2 = np.array(_rollerX.roll(arr[idx1: idx2], timearr[idx1: idx2]), copy=False)
         out3 = np.array(_rollerX.roll(arr[idx2:], timearr[idx2:]), copy=False)
@@ -125,12 +137,12 @@ def test_shift(ret=False):
     nzones = 0
     nfeats = 8
 
-    rollerX = rollers.RollerX(tfs, nzones=nzones)
-    rollerY = rollers.RollerY(tfs, nzones=nzones)
+    rollerX = _rollers.RollerX(tfs, nzones=nzones)
+    rollerY = _rollers.RollerY(tfs, nzones=nzones)
     xFeats = np.array(rollerX.roll(arr, timearr), dtype=np.float64, copy=False)
     def calc_roller_out():
         idx1, idx2 = len(xFeats)//3, 2*(len(xFeats)//3)
-        _rollerY = rollers.RollerY(tfs, nzones=nzones)
+        _rollerY = _rollers.RollerY(tfs, nzones=nzones)
         out1 = np.array(_rollerY.shift(xFeats[:idx1], timearr[:idx1]), copy=False)
         out2 = np.array(_rollerY.shift(xFeats[idx1: idx2], timearr[idx1: idx2]), copy=False)
         out3 = np.array(_rollerY.shift(xFeats[idx2:], timearr[idx2:]), copy=False)
@@ -153,8 +165,8 @@ def test_labels(ret=False):
     nzones = 0
     nfeats = 8
 
-    rollerX = rollers.RollerX(tfs, nzones=nzones)
-    rollerY = rollers.RollerY(tfs, nzones=nzones)
+    rollerX = _rollers.RollerX(tfs, nzones=nzones)
+    rollerY = _rollers.RollerY(tfs, nzones=nzones)
     xFeats = np.array(rollerX.roll(arr, timearr), dtype=np.float64, copy=False)
     ref_shifted = shift_forward(xFeats, timestamps, timedeltas, trunc=True)[:-1]
     yFeats= np.array(rollerY.shift(xFeats, timearr), dtype=np.float64, copy=False)
@@ -185,7 +197,7 @@ def test_labels(ret=False):
 
     def calc_roller_out():
         idx1, idx2 = len(xFeats)//3, 2*(len(xFeats)//3)
-        _rollerY = rollers.RollerY(tfs, nzones=nzones)
+        _rollerY = _rollers.RollerY(tfs, nzones=nzones)
         yout1 = np.array(_rollerY.shift(xFeats[:idx1], timearr[:idx1]), copy=False)
         out1 = np.array(_rollerY.roll(arr[:idx1], xFeats[:idx1], yout1, timearr[:idx1]), copy=False)
         yout2 = np.array(_rollerY.shift(xFeats[idx1: idx2], timearr[idx1: idx2]), copy=False)
@@ -210,18 +222,18 @@ def test_continuousX_sampling(ret=False):
     nfeats = 8
     sampling_tf = 0
 
-    rollerX = rollers.RollerX(tfs, nzones=nzones)
+    rollerX = _rollers.RollerX(tfs, nzones=nzones)
 
     def calc_pd_ref():
         print("Doing RollerX Full roll with numpy comparison+indexing for (self-contained) sampling")
-        rollerXF = rollers.RollerX(tfs, nzones=0)
+        rollerXF = _rollers.RollerX(tfs, nzones=0)
         fullFeats = np.array(rollerXF.roll(arr, timearr), copy=False)
         idxs = np.where((arr == fullFeats[:, 1, sampling_tf]) | (arr == fullFeats[:, 2, sampling_tf]))
         return fullFeats[idxs]
 
     def calc_roller_out():
         idx1, idx2 = len(arr)//3, 2* (len(arr)//3)
-        _rollerX = rollers.RollerX(tfs, nzones=nzones)
+        _rollerX = _rollers.RollerX(tfs, nzones=nzones)
         out1 = np.array(_rollerX.roll(arr[:idx1], timearr[:idx1], True, "highlow", 0), copy=False)
         out2 = np.array(_rollerX.roll(arr[idx1: idx2], timearr[idx1: idx2], True, "highlow", 0), copy=False)
         out3 = np.array(_rollerX.roll(arr[idx2:], timearr[idx2:], True, "highlow", 0), copy=False)
@@ -246,9 +258,9 @@ def test_zones(ret=False):
 
     timedeltas = [pd.Timedelta(t) for t in ["1h"]]
     tfs = [tdelta.value for tdelta in timedeltas]
-    rollerX = rollers.RollerX(tfs, nzones=nzones)
+    rollerX = _rollers.RollerX(tfs, nzones=nzones)
     # USE ROLLER_CY FOR SPEED BENCHMARK AND PANDAS FOR TESTING LOGIC
-    # rollerX_cy = rollers_cy.RollerX_NEW(np.array(tfs))
+    # rollerX_cy = _rollers_cy.RollerX_NEW(np.array(tfs))
     # out_ref_cy = time_profile(1, 1, roller_cy = lambda: rollerX_cy.roll(arr, timestamps))[1][:, :, :len(tfs)]
     print("Doing Pandas Calculations...takes time")
 
@@ -297,8 +309,8 @@ if __name__ == "__main__":
     # Collect Outputs Here for Debugging
     DEBUG = False
     if not DEBUG:
-        tests = [test_continuousX, test_shift,
-                 test_continuousX_sampling]
+        tests = [test_wrapper, test_continuousX,
+                 test_shift, test_continuousX_sampling]
         passed = 0
         failed = []
         for i, test in enumerate(tests):

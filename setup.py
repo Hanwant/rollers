@@ -4,7 +4,7 @@ import sys
 import platform
 import subprocess
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
@@ -71,7 +71,8 @@ setup(
     author_email='hanwantshekh@gmail.com',
     description='Efficient windowed functions for time series.',
     long_description=long_description,
-    ext_modules=[CMakeExtension('rollers')],
+    ext_modules=[CMakeExtension('_rollers')],
+    packages=find_packages(),
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
 )

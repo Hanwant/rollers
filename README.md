@@ -10,7 +10,7 @@ The windowed functions may aggregate based on either continuous time, with varia
 The main use case of such a library is that the classes provide a ***stateful*** object which can update state for singular data updates as well as batches. As it accumulates and retains the necessary memory to avoid redundant recomputation, this is ideal for processing ***streaming*** data
 or for chunking data which is too large for memory into batches.  
 
-\* Calculation of log returns assumes all values are positive (log(-new/old) == undefined) 
+\* Calculation of log returns assumes all values are positive (log(-new/old) == undefined == Nan) 
 <br>
 ## Usage
 ```python
@@ -23,7 +23,7 @@ N = 10000
 arr = np.abs(np.random.randn(N)) # abs to make all values positive
 timestamps = pd.date_range(start = "2002-01-01", periods = N,
                            freq="1min", tz="utc")
-series = pd.Series(arr, index=timestamp)
+series = pd.Series(arr, index=timestamps)
 
 # specify timeframes for moving window functions
 timeframes = ["15min", "30min", "60min", "4h", "12h"]
@@ -62,12 +62,11 @@ or:
     
 
 ### To Do:
-* Write proper discrete version of Roller class. Currently fixed window functions are ad-hoc by providing the continuous time-based functions an array of contrived timestamps. 
-* Tests for Roller Wrapper. Currently tests operate on RollerX directly.
-* Use either templating or dynamic dispatch / overloading to allow user to select
-which time series functions they want, instead of providing all 8 by default.
 * Switch to Eigen Tensor instead of boost multi for multi-dimenional arrays
 * Reconsider data structures for storing memory - must be efficient to resize/re-allocate 
+* Use either templating or dynamic dispatch / overloading to allow user to select
+which time series functions they want, instead of providing all 8 by default.
+* Write proper discrete version of Roller class. Currently fixed window functions are ad-hoc by providing the continuous time-based functions an array of contrived timestamps. 
 
 <br><br><br>
 

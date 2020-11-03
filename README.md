@@ -1,7 +1,7 @@
 # Rollers
 (Work in Progress)
 ### Efficient stateful moving window functions for timeseries.
-This Python/C++ library contains implementations of algorithms for calcuating mean, min, max, var & volatility on sliding time-based windows, using the appropriate algorithms<sup>[1]</sup> and data structures<sup>[2]</sup> for optimimal computational complexity. 
+This Python/C++ library contains implementations of algorithms for calcuating mean, min, max, var & volatility on sliding time-based windows, using the appropriate algorithms<sup>[1]</sup> and data structures<sup>[2]</sup> optimized for computational complexity. 
 Application is intended for finanical times series, hence the set of functions available are open, high low, close, mean, log returns\*, var and volatility. 
 These 8 functions are performed for each new datapoint and aggregated into one matrix for any number of timeframes specified. 
 The windowed functions may aggregate based on either continuous time, with variable window sizes and no assumption of the data being evenly sampled, or fixed window sizes which correspond to periods defined by number of data points sampled, instead of actual time.

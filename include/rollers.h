@@ -13,15 +13,10 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/multi_array.hpp>
 
-// #include <H5Cpp.h>
 
 #include <Eigen/Core>
 #include <unsupported/Eigen/CXX11/Tensor>
 
-// #include "../movingWindow.h"
-
-// #define GNUPLOT_ENABLE_PTY
-// #include "gnuplot-iostream.h"
 using namespace std;
 
 using Eigen::MatrixXd;

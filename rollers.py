@@ -1,3 +1,5 @@
+from typing import Union, List
+
 import numpy as np
 import pandas as pd
 from _rollers import RollerX
@@ -7,10 +9,23 @@ TIMESTAMP_DTYPES = (np.datetime64, np.uint64)
 
 class Roller:
     """
-    Wraps C++ Rollers
+    Wraps C++ Rollers for a single price/time series
     Does type checking and preparing inputs for the c++ functions
     """
     def __init__(self, timeframes: list):
+        self.register_timeframes(timeframes)
+        self._roller = RollerX(self.timeframes_uint64_t, nzones=0)
+
+        # Important as discrete windows are implemented ad-hoc
+        # Given that time offset arithmetic is performed inside rollers
+        # Ie in tail_update function, subtraction which would lead to
+        # negative numbers on uint64 will instead lead to incorrect behaviour
+        # and seg fault when eventually a wrong index is accessed inside the
+        # inner loop of tail_update - outer safeguards don't get chance to
+        # operate
+        self.current_discrete_idx = max(self.timeframes_uint64_t)
+
+    def register_timeframes(self, timeframes):
         all_same_type = all([isinstance(tf, type(timeframes[0])) for tf in timeframes])
         if not all_same_type:
             raise TypeError("All elements of timeframes list must be of the same type")
@@ -25,20 +40,6 @@ class Roller:
             self.window_type = "continuous"
             self.timeframes = [pd.Timedelta(tf) for tf in timeframes]
             self.timeframes_uint64_t = [tf.value for tf in self.timeframes]
-        self._roller = RollerX(self.timeframes_uint64_t, nzones=0)
-
-        # Important as discrete windows are implemented ad-hoc
-        # Given that time offset arithmetic is performed inside rollers
-        # Ie in tail_update function, subtraction which would lead to
-        # negative numbers on uint64 will instead lead to incorrect behaviour
-        # and seg fault when eventually a wrong index is accessed inside the
-        # inner loop of tail_update - outer safeguards don't get chance to
-        # operate
-        self.current_discrete_idx = max(self.timeframes_uint64_t)
-
-    def roll(self, data, timestamps=None):
-        arr, timearr = self.prepare_data(data, timestamps)
-        return np.array(self._roller.roll(arr, timearr), copy=False)
 
     def check_timestamps(self, timestamps):
         """
@@ -84,3 +85,37 @@ class Roller:
             self.current_discrete_idx += len(data)
             return arr, timearr.astype("uint64")
         return arr, timestamps
+
+    def roll(self, data, timestamps=None):
+        arr, timearr = self.prepare_data(data, timestamps)
+        return np.array(self._roller.roll(arr, timearr), copy=False)
+
+
+class RollerMulti(Roller):
+    """
+    UNTESTED
+    Aggregates features for multiple price/time series
+    Uses the same timeframes for each.
+    """
+    def __init__(self, timeframes: list, n_series: int):
+        self.register_timeframes(timeframes)
+        self.n_series = n_series
+        self._rollers = []
+        for _ in range(n_series):
+            self._rollers.append(RollerX(self.timeframes_uint64_t, nzones=0))
+        self.current_discrete_idx = max(self.timeframes_uint64_t)
+
+    def roll(self, data: List[np.ndarray],
+             timestamps: Union[np.ndarray, list] = None,
+             aggregate_array: bool = False):
+        out = []
+        for i, dat in enumerate(data):
+            if isinstance(timestamps, list):
+                ts = timestamps[i]
+            else:
+                ts = timestamps
+            single_out = super().roll(dat, ts)
+            out.append(single_out)
+        if aggregate_array:
+            return np.stack(out, axis=-1)
+        return out

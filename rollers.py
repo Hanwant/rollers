@@ -114,7 +114,9 @@ class RollerMulti(Roller):
                 ts = timestamps[i]
             else:
                 ts = timestamps
-            single_out = super().roll(dat, ts)
+            arr, timearr = self.prepare_data(dat, ts)
+            single_out = np.array(self._rollers[i].roll(arr, timearr),
+                                  copy=False)
             out.append(single_out)
         if aggregate_array:
             return np.stack(out, axis=-1)
